@@ -24,44 +24,33 @@
 ```
 LOGISTIC/
 ├─ logistic/                       # backend folder
-│  ├─ src/main/java/net/proselyte/api/
-│  │  ├─ rest/AuthRestControllerV1.java         # /v1/auth/* (login/refresh/me/registration)
-│  │  ├─ service/{UserService,TokenService}.java
-│  │  ├─ client/KeycloakClient.java             # вызовы в Keycloak
-│  │  ├─ mapper/{TokenResponseMapper, ...}.java # MapStruct маппинги
-│  │  ├─ aspect/LoginMetricAspect.java          # инкремент метрики логина
-│  │  ├─ metric/LoginCountTotalMetric.java
-│  │  └─ config/{SecurityConfig, KeycloakProperties, ...}.java
-│  ├─ src/main/resources/{application.yml,logback.xml}
-│  ├─ openapi/{individual-api.yaml,keycloak-api.yaml}
-│  ├─ src/test/... (Testcontainers: Keycloak, WireMock, Postgres)
-│  ├─ Dockerfile
-│  └─ .env (переменные доступа к Nexus snapshots)
+│  ├─ src/main/java/com/example/logistic/
+│  │  ├─ config/
+│  │  ├─ exceptiom/
+│  │  ├─ model/
+│  │  ├─ repo/
+│  │  ├─ service/
+│  │  ├─ web/
+│  │  └─ LogisticsApplication.java   # main
+│  └─ Dockerfile
 │
-├─ architecture/                                # архитектурные артефакты
-│
-├─ person-service/            # Persons Service (Spring MVC + JPA)
-│  ├─ src/main/java/net/proselyte/personservice/
-│  │  ├─ rest/IndividualRestControllerV1.java   # /v1/persons
-│  │  ├─ service/IndividualService.java
-│  │  └─ util/DateTimeUtil.java
-│  ├─ src/main/resources/{application.yml,logback.xml}
-│  ├─ openapi/person-api.yaml                   # спецификация API
-│  ├─ build.gradle.kts                          # включает openapi-generator и публикацию SDK
-│  └─ Dockerfile                                # билд + publish в локальный Nexus
-│
-├─ infrastructure/
-│  ├─ keycloak/realm-config.json                # импорт realm "individual"
-│  ├─ grafana/provisioning/{datasources,dashboards}
-│  ├─ prometheus/prometheus.yml
-│  ├─ tempo/tempo.yaml
-│  └─ loki/loki-config.yaml
-│
-├─ postman/
-│  ├─ individuals_api_postman_collection.json       # postman коллекция для тестирования individuals-api
-│  └─ persons_api_postman_collection.json           # postman коллекция для тестирования persons-api
+├─ logistic-ui/           
+│  ├─ src/
+│  │  ├─ api/
+│  │  ├─ assets/
+│  │  ├─ components/
+│  │  ├─ pages/
+│  │  ├─ ui/
+│  │  ├─ css
+│  │  ├─ index.css
+│  │  └─ main.jsx
+│  ├─ index.html
+│  ├─ nginx.conf
+│  └─ Dockerfile                                # билд + publish 
 ├─ docker-compose.yml
-└─ Makefile
+├─ logisticBD.drawio
+├─ logisticBD.png
+└─ ReadMe.md
 ```
 
 ---
@@ -142,6 +131,5 @@ http://localhost:80/
 
 ## Автор
 
-* [Eugene Suleimanov](https://github.com/proselytear)
-* [Vladislav Kolyago](https://github.com/kolyago-vladislav)
-* [Software Engineering Telegram](https://t.me/esuleimanov)
+* [Pogodin Yegor](https://github.com/PogodinEgor)
+
