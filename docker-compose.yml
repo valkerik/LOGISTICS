@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: logistic_db
+    environment:
+      POSTGRES_DB: logistic
+      POSTGRES_USER: logistic_user
+      POSTGRES_PASSWORD: logistic_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logistic_user -d logistic"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: ./logistics
+      dockerfile: Dockerfile
+    container_name: logistic_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/logistic
+      SPRING_DATASOURCE_USERNAME: logistic_user
+      SPRING_DATASOURCE_PASSWORD: logistic_pass
+      # при желании можно явно включить liquibase (по умолчанию он включен):
+      # SPRING_LIQUIBASE_ENABLED: "true"
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./logistics-ui
+      dockerfile: Dockerfile
+    container_name: logistic_frontend
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "80:80"
+    # если порт 80 занят — поменяйте на "5173:80" и заходите по http://localhost:5173
+
+volumes:
+  pgdata:

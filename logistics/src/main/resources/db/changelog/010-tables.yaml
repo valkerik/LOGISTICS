@@ -1,0 +1,228 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-client
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: client
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column: { name: name, type: TEXT, constraints: { nullable: false, unique: true } }
+              - column: { name: inn, type: VARCHAR(12) }
+              - column: { name: kpp, type: VARCHAR(9) }
+              - column: { name: phone, type: TEXT }
+              - column: { name: email, type: TEXT }
+              - column: { name: address, type: TEXT }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()" }
+
+  - changeSet:
+      id: 011-carrier
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: carrier
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column: { name: name, type: TEXT, constraints: { nullable: false, unique: true } }
+              - column: { name: inn, type: VARCHAR(12) }
+              - column: { name: phone, type: TEXT }
+              - column: { name: email, type: TEXT }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()" }
+
+  - changeSet:
+      id: 012-driver
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: driver
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column:
+                  name: carrier_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    referencedTableName: carrier
+                    referencedColumnNames: id
+                    foreignKeyName: fk_driver_carrier
+                    deleteRule: restrict
+              - column: { name: full_name, type: TEXT, constraints: { nullable: false } }
+              - column: { name: license_number, type: TEXT, constraints: { nullable: false, unique: true } }
+              - column: { name: license_valid_until, type: DATE, constraints: { nullable: false } }
+              - column: { name: phone, type: TEXT }
+              - column: { name: active, type: BOOLEAN, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()" }
+
+  - changeSet:
+      id: 013-vehicle
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: vehicle
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column:
+                  name: carrier_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    referencedTableName: carrier
+                    referencedColumnNames: id
+                    foreignKeyName: fk_vehicle_carrier
+                    deleteRule: restrict
+              - column: { name: plate_no, type: TEXT, constraints: { nullable: false, unique: true } }
+              - column: { name: vin, type: TEXT, constraints: { unique: true } }
+              - column: { name: make, type: TEXT }
+              - column: { name: model, type: TEXT }
+              - column: { name: year, type: INT }
+              - column: { name: capacity_kg, type: "NUMERIC(10,2)", constraints: { nullable: false } }
+              - column: { name: type, type: TEXT, constraints: { nullable: false } }   # вместо vehicle_type
+              - column: { name: active, type: BOOLEAN, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()" }
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE vehicle
+              ADD CONSTRAINT chk_vehicle_year
+                CHECK (year BETWEEN 1970 AND EXTRACT(YEAR FROM now())::INT + 1),
+              ADD CONSTRAINT chk_vehicle_capacity
+                CHECK (capacity_kg > 0);
+
+  - changeSet:
+      id: 014-app_user
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: app_user
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column: { name: username, type: TEXT, constraints: { nullable: false, unique: true } }
+              - column: { name: pass_hash, type: TEXT, constraints: { nullable: false } }
+              - column: { name: role, type: TEXT, defaultValue: "VIEWER", constraints: { nullable: false } }  # вместо user_role
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()" }
+              - column: { name: active, type: BOOLEAN, defaultValueBoolean: true, constraints: { nullable: false } }
+
+  - changeSet:
+      id: 015-shipment
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: shipment
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column:
+                  name: client_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    referencedTableName: client
+                    referencedColumnNames: id
+                    foreignKeyName: fk_shipment_client
+                    deleteRule: restrict
+              - column:
+                  name: carrier_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    referencedTableName: carrier
+                    referencedColumnNames: id
+                    foreignKeyName: fk_shipment_carrier
+                    deleteRule: restrict
+              - column:
+                  name: vehicle_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    referencedTableName: vehicle
+                    referencedColumnNames: id
+                    foreignKeyName: fk_shipment_vehicle
+                    deleteRule: set null
+              - column:
+                  name: driver_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    referencedTableName: driver
+                    referencedColumnNames: id
+                    foreignKeyName: fk_shipment_driver
+                    deleteRule: set null
+              - column: { name: pickup_address, type: TEXT, constraints: { nullable: false } }
+              - column: { name: delivery_address, type: TEXT, constraints: { nullable: false } }
+              - column: { name: cargo_description, type: TEXT, constraints: { nullable: false } }
+              - column: { name: cargo_weight, type: "NUMERIC(10,2)", constraints: { nullable: false } }
+              - column: { name: planned_pickup_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: planned_delivery_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: price, type: "NUMERIC(12,2)", defaultValueNumeric: 0, constraints: { nullable: false } }
+              - column: { name: status, type: TEXT, defaultValue: "NEW", constraints: { nullable: false } }  # вместо shipment_status
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: "now()", constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, defaultValueComputed: "now()", constraints: { nullable: false } }
+        - sql:
+            splitStatements: false
+            sql: |
+              ALTER TABLE shipment
+              ADD CONSTRAINT chk_shipment_dates
+                CHECK (planned_delivery_at > planned_pickup_at),
+              ADD CONSTRAINT chk_shipment_weight
+                CHECK (cargo_weight > 0);
+
+  - changeSet:
+      id: 016-shipment-status-history
+      author: pogodin
+      changes:
+        - createTable:
+            tableName: shipment_status_history
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  autoIncrement: true
+                  constraints: { primaryKey: true }
+              - column:
+                  name: shipment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    referencedTableName: shipment
+                    referencedColumnNames: id
+                    foreignKeyName: fk_hist_shipment
+                    deleteRule: cascade
+              - column: { name: status, type: TEXT, constraints: { nullable: false } }  # вместо shipment_status
+              - column:
+                  name: changed_at
+                  type: timestamptz
+                  defaultValueComputed: "now()"
+                  constraints: { nullable: false }
+              - column:
+                  name: changed_by
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                    referencedTableName: app_user
+                    referencedColumnNames: id
+                    foreignKeyName: fk_hist_user
+                    deleteRule: set null
+              - column: { name: note, type: TEXT }

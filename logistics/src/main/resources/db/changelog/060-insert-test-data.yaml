@@ -1,0 +1,145 @@
+databaseChangeLog:
+  - changeSet:
+      id: 060-seed-core
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              -- ==== CLIENTS ====
+              INSERT INTO client (name, inn, kpp, phone, email, address, created_at)
+              VALUES
+                ('ACME Logistics LLC', '770123456789', '770101001', '+7 (495) 111-22-33', 'ops@acme.example', 'Москва, ул. Примерная, 1', now()),
+                ('Globex Import',       '780987654321', '780901001', '+7 (812) 222-33-44', 'contact@globex.example', 'Санкт-Петербург, Невский 10', now()),
+                ('ARM_Cortex',       '964452667400', '693783635', '+7 (812) 222-33-43', 'armcont@globex.com', 'Омск, Ленина 12', now()),
+                ('Groza Holding',       '390115923547', '640511284', '+7 (812) 222-33-22', 'groza@globex.example', 'Москва, Петрова 4', now()),
+                ('AliMoll',       '804202671674', '722366640', '+7 (812) 222-33-67', 'alimoll@globex.example', 'Курск, Солнечная 99', now()),
+                ('Soyuz Agro',          '540555444333', '540501001', '+7 (383) 333-44-55', 'log@soyuz.example',      'Новосибирск, Лесная 7', now())
+              ON CONFLICT (name) DO NOTHING;
+
+              -- ==== CARRIERS ====
+              INSERT INTO carrier (name, inn, phone, email, created_at)
+              VALUES
+                ('FastCarrier', '500100200300', '+7 (495) 700-00-01', 'desk@fastcarrier.example', now()),
+                ('Radeport', '5605190356', '+7 (495) 700-00-22', 'redepo@fastcarrier.example', now()),
+                ('Сорти', '990219866385', '+7 (495) 700-00-33', 'corty@fastcarrier.example', now()),
+                ('Рогачев', '757851974974', '+7 (495) 700-00-44', 'rogach@fastcarrier.example', now()),
+                ('ИП Печенька', '6980951490', '+7 (495) 700-00-55', 'pe4enka@fastcarrier.example', now()),
+                ('GeForce', '6359274998', '+7 (495) 700-00-66', 'geforce@fastcarrier.example', now()),
+                ('EuroCarrier', '326161767987', '+7 (812) 800-00-02', 'info@eurocarrier.example', now())
+              ON CONFLICT (name) DO NOTHING;
+
+              -- ==== USERS ====
+              -- pass_hash здесь просто DEMO-строка. В реальном приложении клади bcrypt/scrypt/argon2 хэш.
+              INSERT INTO app_user (username, pass_hash, role, active, created_at)
+              VALUES
+                ('admin',   '{bcrypt}$2a$10$Yb5kG8x1vZcUo1mE3bVh1eS1Yx9oZlXbHk0TnQ9xE1f9qk4P8YQSO', 'ADMIN',   true, now()),
+                ('manager', '{bcrypt}$2a$10$Yb5kG8x1vZcUo1mE3bVh1eS1Yx9oZlXbHk0TnQ9xE1f9qk4P8YQSO', 'MANAGER', true, now()),
+                ('viewer',  '{bcrypt}$2a$10$Yb5kG8x1vZcUo1mE3bVh1eS1Yx9oZlXbHk0TnQ9xE1f9qk4P8YQSO', 'VIEWER',  true, now())
+              ON CONFLICT (username) DO NOTHING;
+
+              -- ==== VEHICLES ====
+              INSERT INTO vehicle (carrier_id, plate_no, vin, make, model, year, capacity_kg, type, active, created_at)
+              SELECT c.id, v.plate_no, v.vin, v.make, v.model, v.year, v.capacity_kg, v.type, v.active, now()
+              FROM (
+                VALUES
+                  ('FastCarrier', 'A111AA77', 'VF1ABCD1234567890', 'Volvo',   'FH',   2018, 20000.00, 'TRUCK', true),
+                  ('Рогачев', 'A222AA31', 'VF1ABCD1234561111', 'BMW',   'FH',   2018, 20000.00, 'TRUCK', true),
+                  ('ИП Печенька', 'A333AA77', 'VF1ABCD1234567333', 'Kamaz',   'FH',   2021, 20000.00, 'TRUCK', true),
+                  ('ИП Печенька', 'А444AA77', 'VF1ABCD1234564444', 'Van',   'FH',   2011, 22000.00, 'TRUCK', true),
+                  ('Рогачев', 'A555AA77', 'VF1ABCD1234567990', 'Gazel',   'FH',   2020, 5000.00, 'TRUCK', true),
+                  ('Сорти', 'A111AA98', 'VF1ABCD1234567770', 'Volvo',   'FH',   2019, 23000.00, 'TRUCK', true),
+                  ('FastCarrier', 'B222BB77', 'WDBXYZ98765432100', 'Mercedes','Actros',2022, 35000.00, 'TRUCK', true),
+                  ('EuroCarrier', 'C333CC98', 'XTA21099012345678', 'GAZ',     'Next', 2023,  3500.00, 'VAN',   true)
+              ) AS v(carrier_name, plate_no, vin, make, model, year, capacity_kg, type, active)
+              JOIN carrier c ON c.name = v.carrier_name
+              ON CONFLICT (plate_no) DO NOTHING;
+
+              -- ==== DRIVERS ====
+              INSERT INTO driver (carrier_id, full_name, license_number, license_valid_until, phone, active, created_at)
+              SELECT c.id, d.full_name, d.license_number, d.license_valid_until, d.phone, d.active, now()
+              FROM (
+                VALUES
+                  ('FastCarrier', 'Иванов Иван Иванович',   '77 11 123456', date '2027-12-31', '+7 (900) 111-11-11', true),
+                  ('ИП Печенька', 'Печеньков Печенька Печеньевич',   '73 71 123456', date '2027-12-23', '+7 (900) 111-11-22', true),
+                  ('ИП Печенька', 'Пирогов Петр Иванович',   '74 77 123456', date '2027-11-21', '+7 (900) 111-11-33', true),
+                  ('Сорти', 'Душин Сергей Иванович',   '75 87 123456', date '2027-12-12', '+7 (900) 111-11-44', true),
+                  ('Рогачев', 'Сладев Данила Яковлевич',   '76 57 123456', date '2027-12-14', '+7 (900) 111-11-55', true),
+                  ('FastCarrier', 'Быстров Лев Алексеевич',   '77 24 234567', date '2026-06-30', '+7 (900) 222-22-22', true),
+                  ('EuroCarrier', 'Сидоров Сергей Сергеевич','98 33 345678', date '2028-03-31', '+7 (900) 333-33-33', true)
+              ) AS d(carrier_name, full_name, license_number, license_valid_until, phone, active)
+              JOIN carrier c ON c.name = d.carrier_name
+              ON CONFLICT (license_number) DO NOTHING;
+
+              -- ==== SHIPMENTS ====
+              -- создаём несколько перевозок с привязками по натуральным ключам
+              INSERT INTO shipment
+                (client_id, carrier_id, vehicle_id, driver_id,
+                 pickup_address, delivery_address,
+                 cargo_description, cargo_weight,
+                 planned_pickup_at, planned_delivery_at,
+                 price, status, created_at, updated_at)
+              SELECT
+                cl.id, cr.id, v.id, dr.id,
+                s.pickup_address, s.delivery_address,
+                s.cargo_description, s.cargo_weight,
+                now() + s.pickup_shift, now() + s.delivery_shift,
+                s.price, s.status, now(), now()
+              FROM (
+                VALUES
+                  -- client,      carrier,     plate,     driver_license,   pickup_addr,              delivery_addr,             desc,               weight,   pickup +?,       delivery +?,     price,    status
+                  ('ACME Logistics LLC', 'FastCarrier', 'A111AA77', '77 11 123456', 'Москва, Склад 1',      'Тверь, Магазин 5',      'Паллеты 33Е',       18000.00, interval '1 day', interval '2 days', 120000.00, 'ASSIGNED'),
+                  ('Globex Import',      'FastCarrier', 'B222BB77', '77 22 234567', 'СПб, Терминал Сев',    'Великий Новгород, ТЦ',  'Стройматериалы',     20000.00, interval '2 days', interval '4 days', 150000.00, 'NEW'),
+                  ('Soyuz Agro',         'EuroCarrier', 'C333CC98', '98 33 345678', 'Новосибирск, Элеватор','Барнаул, АгроБаза',     'Семена подсолнеч.',   3200.00, interval '12 hours', interval '36 hours',  65000.00, 'IN_TRANSIT')
+              ) AS s(client_name, carrier_name, plate_no, driver_license, pickup_address, delivery_address, cargo_description, cargo_weight, pickup_shift, delivery_shift, price, status)
+              JOIN client  cl ON cl.name = s.client_name
+              JOIN carrier cr ON cr.name = s.carrier_name
+              LEFT JOIN vehicle v ON v.plate_no = s.plate_no
+              LEFT JOIN driver  dr ON dr.license_number = s.driver_license
+              -- защита от дублей: уникального ключа нет, но можно не вставлять, если уже есть перевозка с теми же client/carrier и planned_pickup_at в ближайшие сутки
+              ON CONFLICT DO NOTHING;
+
+              -- ==== SHIPMENT STATUS HISTORY ====
+              -- на каждую shipment добавим по 1–2 записей истории (если их ещё нет)
+              INSERT INTO shipment_status_history (shipment_id, status, changed_at, changed_by, note)
+              SELECT s.id, s.status, s.created_at, NULL, 'seed: initial'
+              FROM shipment s
+              WHERE NOT EXISTS (
+                SELECT 1 FROM shipment_status_history h
+                WHERE h.shipment_id = s.id AND h.status = s.status
+              );
+
+              -- дополнительный апдейт для одной из перевозок
+              INSERT INTO shipment_status_history (shipment_id, status, changed_at, changed_by, note)
+              SELECT s.id, 'IN_TRANSIT', now(), NULL, 'seed: moved to transit'
+              FROM shipment s
+              WHERE s.status <> 'IN_TRANSIT'
+              ORDER BY s.id
+              LIMIT 1
+              ON CONFLICT DO NOTHING;
+      rollback:
+        - sql:
+            splitStatements: false
+            sql: |
+              -- удаляем только наши демо-данные по уникальным натуральным ключам
+              DELETE FROM shipment_status_history
+              WHERE note IN ('seed: initial','seed: moved to transit');
+
+              DELETE FROM shipment
+              WHERE cargo_description IN ('Паллеты 33Е','Стройматериалы','Семена подсолнеч.');
+
+              DELETE FROM driver
+              WHERE license_number IN ('77 11 123456','77 22 234567','98 33 345678');
+
+              DELETE FROM vehicle
+              WHERE plate_no IN ('A111AA77','B222BB77','C333CC98');
+
+              DELETE FROM app_user
+              WHERE username IN ('admin','manager','viewer');
+
+              DELETE FROM carrier
+              WHERE name IN ('FastCarrier','EuroCarrier');
+
+              DELETE FROM client
+              WHERE name IN ('ACME Logistics LLC','Globex Import','Soyuz Agro');

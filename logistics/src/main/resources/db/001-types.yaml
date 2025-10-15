@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-enums
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: ";"
+            sql: |
+              DO $$
+              BEGIN
+                  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vehicle_type') THEN
+                      CREATE TYPE vehicle_type AS ENUM ('TRUCK', 'VAN', 'TRAILER', 'CAR');
+                  END IF;
+                  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'shipment_status') THEN
+                      CREATE TYPE shipment_status AS ENUM (
+                          'NEW','ASSIGNED','PICKED_UP','IN_TRANSIT','DELIVERED','CANCELLED'
+                      );
+                  END IF;
+                  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+                      CREATE TYPE user_role AS ENUM ('ADMIN','DISPATCHER','MANAGER','VIEWER');
+                  END IF;
+              END$$;

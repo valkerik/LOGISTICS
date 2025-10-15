@@ -1,0 +1,121 @@
+databaseChangeLog:
+  - changeSet:
+      id: 030-func-set-updated-at
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: ";"
+            sql: |
+              CREATE OR REPLACE FUNCTION trg_set_updated_at()
+              RETURNS TRIGGER LANGUAGE plpgsql AS $$
+              BEGIN
+                  NEW.updated_at := now();
+                  RETURN NEW;
+              END$$;
+
+  - changeSet:
+      id: 031-trigger-set-updated-at
+      author: pogodin
+      changes:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS set_updated_at ON shipment;
+              CREATE TRIGGER set_updated_at
+              BEFORE UPDATE ON shipment
+              FOR EACH ROW
+              EXECUTE FUNCTION trg_set_updated_at();
+
+  - changeSet:
+      id: 032-func-validate-shipment
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: ";"
+            sql: |
+              CREATE OR REPLACE FUNCTION trg_validate_shipment_assignment()
+              RETURNS TRIGGER LANGUAGE plpgsql AS $$
+              DECLARE
+                  v_vehicle_carrier BIGINT;
+                  v_driver_carrier  BIGINT;
+              BEGIN
+                  IF NEW.vehicle_id IS NOT NULL THEN
+                      SELECT carrier_id INTO v_vehicle_carrier FROM vehicle WHERE id = NEW.vehicle_id;
+                      IF v_vehicle_carrier IS NULL OR v_vehicle_carrier <> NEW.carrier_id THEN
+                          RAISE EXCEPTION 'Vehicle % belongs to another carrier (%)', NEW.vehicle_id, v_vehicle_carrier;
+                      END IF;
+                      PERFORM 1 FROM vehicle WHERE id = NEW.vehicle_id AND capacity_kg >= NEW.cargo_weight;
+                      IF NOT FOUND THEN
+                          RAISE EXCEPTION 'Cargo weight (%.2f) exceeds vehicle capacity', NEW.cargo_weight;
+                      END IF;
+                  END IF;
+
+                  IF NEW.driver_id IS NOT NULL THEN
+                      SELECT carrier_id INTO v_driver_carrier FROM driver WHERE id = NEW.driver_id;
+                      IF v_driver_carrier IS NULL OR v_driver_carrier <> NEW.carrier_id THEN
+                          RAISE EXCEPTION 'Driver % belongs to another carrier (%)', NEW.driver_id, v_driver_carrier;
+                      END IF;
+                      PERFORM 1 FROM driver WHERE id = NEW.driver_id AND license_valid_until >= CURRENT_DATE;
+                      IF NOT FOUND THEN
+                          RAISE EXCEPTION 'Driver license expired';
+                      END IF;
+                  END IF;
+
+                  RETURN NEW;
+              END$$;
+
+  - changeSet:
+      id: 033-triggers-validate-shipment
+      author: pogodin
+      changes:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS validate_shipment_assignment_ins ON shipment;
+              DROP TRIGGER IF EXISTS validate_shipment_assignment_upd ON shipment;
+              CREATE TRIGGER validate_shipment_assignment_ins
+              BEFORE INSERT ON shipment
+              FOR EACH ROW
+              EXECUTE FUNCTION trg_validate_shipment_assignment();
+              CREATE TRIGGER validate_shipment_assignment_upd
+              BEFORE UPDATE ON shipment
+              FOR EACH ROW
+              EXECUTE FUNCTION trg_validate_shipment_assignment();
+
+  - changeSet:
+      id: 034-func-log-status-change
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: ";"
+            sql: |
+              CREATE OR REPLACE FUNCTION trg_log_status_change()
+              RETURNS TRIGGER LANGUAGE plpgsql AS $$
+              BEGIN
+                  IF TG_OP = 'INSERT' THEN
+                      INSERT INTO shipment_status_history(shipment_id, status, note)
+                      VALUES (NEW.id, NEW.status, 'Created');
+                  ELSIF TG_OP = 'UPDATE' AND NEW.status IS DISTINCT FROM OLD.status THEN
+                      INSERT INTO shipment_status_history(shipment_id, status, note)
+                      VALUES (NEW.id, NEW.status, 'Status changed');
+                  END IF;
+                  RETURN NEW;
+              END$$;
+
+  - changeSet:
+      id: 035-triggers-log-status-change
+      author: pogodin
+      changes:
+        - sql:
+            sql: |
+              DROP TRIGGER IF EXISTS log_status_change_ins ON shipment;
+              DROP TRIGGER IF EXISTS log_status_change_upd ON shipment;
+              CREATE TRIGGER log_status_change_ins
+              AFTER INSERT ON shipment
+              FOR EACH ROW
+              EXECUTE FUNCTION trg_log_status_change();
+              CREATE TRIGGER log_status_change_upd
+              AFTER UPDATE OF status ON shipment
+              FOR EACH ROW
+              EXECUTE FUNCTION trg_log_status_change();

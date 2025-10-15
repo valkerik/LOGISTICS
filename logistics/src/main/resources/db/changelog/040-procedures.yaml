@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: proc_get_shipments_by_client
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION get_shipments_by_client(p_client_id BIGINT)
+              RETURNS TABLE (
+                shipment_id BIGINT,
+                shipment_date DATE,
+                status VARCHAR
+              ) AS $$
+              BEGIN
+                RETURN QUERY
+                  SELECT s.id, s.shipment_date, s.status
+                  FROM shipment s
+                  WHERE s.client_id = p_client_id;
+              END;
+              $$ LANGUAGE plpgsql;
+
+  - changeSet:
+      id: proc_update_vehicle_status
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION update_vehicle_status(p_vehicle_id BIGINT, p_status VARCHAR)
+              RETURNS VOID AS $$
+              BEGIN
+                UPDATE vehicle SET status = p_status WHERE id = p_vehicle_id;
+              END;
+              $$ LANGUAGE plpgsql;
+
+  - changeSet:
+      id: proc_delete_client
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            stripComments: true
+            sql: |
+              CREATE OR REPLACE FUNCTION delete_client(p_client_id BIGINT)
+              RETURNS VOID AS $$
+              BEGIN
+                DELETE FROM client WHERE id = p_client_id;
+              END;
+              $$ LANGUAGE plpgsql;

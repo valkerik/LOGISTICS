@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 020-indexes
+      author: pogodin
+      changes:
+        - createIndex: { tableName: shipment, indexName: idx_shipment_client, columns: [ { column: { name: client_id } } ] }
+        - createIndex: { tableName: shipment, indexName: idx_shipment_carrier, columns: [ { column: { name: carrier_id } } ] }
+        - createIndex: { tableName: shipment, indexName: idx_shipment_status,  columns: [ { column: { name: status } } ] }
+        - createIndex:
+            tableName: shipment_status_history
+            indexName: idx_hist_shipment_changed_at_desc
+            columns:
+              - column: { name: shipment_id }
+              - column: { name: changed_at }
