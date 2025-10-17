@@ -1,5 +1,14 @@
 import { http } from './http'
 
-// Вернётся Page<Vehicle>. По умолчанию вытащим побольше (для селекта)
-export const listVehicles = ({ carrierId, active = true, page = 0, size = 200 } = {}) =>
-    http.get('/vehicles', { params: { carrierId, active, page, size } }).then(r => r.data)
+// можно передать { carrierId, active } — если бэк это понимает
+export const listVehicles = (params = {}) =>
+    http.get('/vehicles', { params }).then(r => r.data)
+
+export const createVehicle = (data) =>
+    http.post('/vehicles', data).then(r => r.data)
+
+export const updateVehicle = (id, data) =>
+    http.put(`/vehicles/${id}`, data).then(r => r.data)
+
+export const deleteVehicle = (id) =>
+    http.delete(`/vehicles/${id}`).then(r => r.data)
