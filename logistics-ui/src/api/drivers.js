@@ -7,7 +7,8 @@ export const createDriver = (data) =>
     http.post('/drivers', data).then(r => r.data)
 
 export const updateDriver = (id, data) =>
-    http.put(`/drivers/${id}`, data).then(r => r.data)
+    http.put(`/drivers/${id}`, data).then(r => r.data)   // ← было PUT
 
 export const deleteDriver = (id) =>
     http.delete(`/drivers/${id}`).then(r => r.data)
+
