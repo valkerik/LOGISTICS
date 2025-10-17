@@ -10,12 +10,13 @@ databaseChangeLog:
               CREATE OR REPLACE FUNCTION get_shipments_by_client(p_client_id BIGINT)
               RETURNS TABLE (
                 shipment_id BIGINT,
-                shipment_date DATE,
-                status VARCHAR
+                planned_pickup_at TIMESTAMPTZ,
+                planned_delivery_at TIMESTAMPTZ,
+                status TEXT
               ) AS $$
               BEGIN
                 RETURN QUERY
-                  SELECT s.id, s.shipment_date, s.status
+                  SELECT s.id, s.planned_pickup_at, s.planned_delivery_at, s.status
                   FROM shipment s
                   WHERE s.client_id = p_client_id;
               END;
@@ -29,7 +30,7 @@ databaseChangeLog:
             splitStatements: false
             stripComments: true
             sql: |
-              CREATE OR REPLACE FUNCTION update_vehicle_status(p_vehicle_id BIGINT, p_status VARCHAR)
+              CREATE OR REPLACE FUNCTION update_vehicle_active(p_vehicle_id BIGINT, p_active BOOLEAN)
               RETURNS VOID AS $$
               BEGIN
                 UPDATE vehicle SET status = p_status WHERE id = p_vehicle_id;
