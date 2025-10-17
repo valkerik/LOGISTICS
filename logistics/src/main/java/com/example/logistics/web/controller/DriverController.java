@@ -40,12 +40,6 @@ public class DriverController {
         return driverService.update(id, req);
     }
 
-//    @PatchMapping("/{id}") // ← добавь
-//    public Driver patch(@PathVariable Long id, @RequestBody @Valid DriverUpdateRequestDto req) {
-//        return driverService.update(id, req);
-//    }
-
-
     @PatchMapping("/{id}/active")
     public Driver setActive(@PathVariable Long id, @RequestBody @Valid DriverSetActiveRequestDto req) {
         return driverService.setActive(id, req.active());

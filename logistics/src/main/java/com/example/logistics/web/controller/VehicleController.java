@@ -5,6 +5,7 @@ import com.example.logistics.model.VehicleType;
 import com.example.logistics.service.VehicleService;
 import com.example.logistics.web.dto.VehicleCreateRequestDto;
 import com.example.logistics.web.dto.VehicleSetActiveRequestDto;
+import com.example.logistics.web.dto.VehicleUpdateRequestDto;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +38,12 @@ public class VehicleController {
     public Vehicle setActive(@PathVariable Long id, @RequestBody @Valid VehicleSetActiveRequestDto req) {
         return service.setActive(id, req.active());
     }
+    // VehicleController.java
+    @PutMapping("/{id}")
+    public Vehicle update(@PathVariable Long id, @RequestBody @Valid VehicleUpdateRequestDto req) {
+        return service.update(id, req);
+    }
+
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) { service.delete(id); }
