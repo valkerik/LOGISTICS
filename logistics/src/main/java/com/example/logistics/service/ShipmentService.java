@@ -3,8 +3,6 @@ package com.example.logistics.service;
 import com.example.logistics.exception.NotFoundException;
 import com.example.logistics.model.*;
 import com.example.logistics.repo.*;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,13 +33,20 @@ public class ShipmentService {
         this.historyRepo = historyRepo;
     }
 
+    // ShipmentService.java (list)
     @Transactional(readOnly = true)
-    public Page<Shipment> list(Long clientId, Long carrierId, List<ShipmentStatus> statuses, Pageable pageable) {
-        if (clientId != null) return new org.springframework.data.domain.PageImpl<>(repo.findByClient_Id(clientId));
-        if (carrierId != null) return new org.springframework.data.domain.PageImpl<>(repo.findByCarrier_Id(carrierId));
-        if (statuses != null && !statuses.isEmpty()) return new org.springframework.data.domain.PageImpl<>(repo.findByStatusIn(statuses));
-        return repo.findAll(pageable);
+    public List<Shipment> list(Long clientId, Long carrierId, List<ShipmentStatus> statuses) {
+        if (clientId != null) return repo.findByClient_Id(clientId);
+        if (carrierId != null) return repo.findByCarrier_Id(carrierId);
+        if (statuses != null && !statuses.isEmpty()) return repo.findByStatusIn(statuses);
+        return repo.findAll();
     }
+
+    @Transactional(readOnly = true)
+    public List<Shipment> list() {
+        return repo.findAll();
+    }
+
 
     @Transactional(readOnly = true)
     public Shipment get(Long id) {
@@ -57,8 +62,9 @@ public class ShipmentService {
         Client client = clientRepo.findById(clientId).orElseThrow(() -> new NotFoundException("Client " + clientId + " not found"));
         Carrier carrier = carrierRepo.findById(carrierId).orElseThrow(() -> new NotFoundException("Carrier " + carrierId + " not found"));
 
-        if (deliveryAt.isBefore(pickupAt)) throw new IllegalArgumentException("planned_delivery_at must be after planned_pickup_at");
-        if (cargoWeight.signum() <= 0)     throw new IllegalArgumentException("cargo_weight must be positive");
+        if (deliveryAt.isBefore(pickupAt))
+            throw new IllegalArgumentException("planned_delivery_at must be after planned_pickup_at");
+        if (cargoWeight.signum() <= 0) throw new IllegalArgumentException("cargo_weight must be positive");
 
         Shipment s = new Shipment();
         s.setClient(client);

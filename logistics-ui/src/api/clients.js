@@ -1,7 +1,9 @@
+// api/clients.js
 import { http } from './http'
 
-export const listClients = (page=0, size=20, q='') =>
-    http.get('/clients', { params: { page, size, q } }).then(r => r.data)
+// /api/clients?q=...
+export const listClients = (q = '') =>
+    http.get('/clients', { params: q ? { q } : {} }).then(r => r.data)
 
 export const createClient = data =>
     http.post('/clients', data).then(r => r.data)

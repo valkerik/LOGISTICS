@@ -5,9 +5,9 @@ import com.example.logistics.service.ClientService;
 import com.example.logistics.web.dto.ClientCreateRequestDto;
 import com.example.logistics.web.dto.ClientUpdateRequestDto;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -16,8 +16,8 @@ public class ClientController {
     public ClientController(ClientService service) { this.service = service; }
 
     @GetMapping
-    public Page<Client> list(@RequestParam(required = false) String q, Pageable pageable) {
-        return service.list(q, pageable);
+    public List<Client> list(@RequestParam(required = false) String q) {
+        return service.list();
     }
 
     @GetMapping("/{id}")

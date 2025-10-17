@@ -13,3 +13,5 @@ databaseChangeLog:
       file: db/changelog/050-views.yaml
   - include:
       file: db/changelog/060-insert-test-data.yaml
+  - include:
+      file: db/changelog/070-insert-test-seed-shipments.yaml

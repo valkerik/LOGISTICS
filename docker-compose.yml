@@ -6,14 +6,14 @@ services:
     container_name: logistic_db
     environment:
       POSTGRES_DB: logistic
-      POSTGRES_USER: logistic_user
-      POSTGRES_PASSWORD: logistic_pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U logistic_user -d logistic"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d logistic"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -28,8 +28,8 @@ services:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/logistic
-      SPRING_DATASOURCE_USERNAME: logistic_user
-      SPRING_DATASOURCE_PASSWORD: logistic_pass
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
       # при желании можно явно включить liquibase (по умолчанию он включен):
       # SPRING_LIQUIBASE_ENABLED: "true"
     ports:

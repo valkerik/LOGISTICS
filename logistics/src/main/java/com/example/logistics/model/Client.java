@@ -1,5 +1,6 @@
 package com.example.logistics.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import java.time.OffsetDateTime;
 @Setter
 @EqualsAndHashCode
 @ToString
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "client", indexes = {
         @Index(name = "idx_client_name", columnList = "name", unique = true)
 })
@@ -21,9 +23,15 @@ public class Client {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) private String name;
-    @Column(length = 12) private String inn;
-    @Column(length = 9)  private String kpp;
+    @Column(nullable = false)
+    private String name;
+
+    @Column(length = 12)
+    private String inn;
+
+    @Column(length = 9)
+    private String kpp;
+
     private String phone;
     private String email;
     private String address;

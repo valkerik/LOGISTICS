@@ -1,0 +1,126 @@
+databaseChangeLog:
+  - changeSet:
+      id: 070-insert-test-seed-shipments
+      author: pogodin
+      changes:
+        - sql:
+            splitStatements: false
+            endDelimiter: ";"
+            sql: |
+              -- Сид-данные для shipment.
+              -- Логика выбора:
+              --  - берём клиентов с OFFSET 0..4 (если столько есть),
+              --  - берём перевозчиков с OFFSET 0..2,
+              --  - подставляем активное ТС и водителя этого перевозчика (если есть),
+              --  - веса небольшие, чтобы точно не превышать capacity,
+              --  - статусы разные: NEW / ASSIGNED / IN_TRANSIT / DELIVERED / CANCELLED.
+
+              -- #1: NEW (без назначения ТС/водителя), carrier #1
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id LIMIT 1),
+                  (SELECT id FROM carrier ORDER BY id LIMIT 1),
+                  NULL, NULL,
+                  'NEW',
+                  'Паллеты с упаковкой', 500, 35000,
+                  'Москва, ул. Первая, 1', 'Санкт-Петербург, Невский проспект, 10',
+                  now() + interval '6 hours', now() + interval '1 day'
+              WHERE EXISTS (SELECT 1 FROM client) AND EXISTS (SELECT 1 FROM carrier);
+
+              -- #2: ASSIGNED (с назначением, если есть активные ТС/водители), carrier #1
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id OFFSET 1 LIMIT 1),
+                  cr.id,
+                  (SELECT id FROM vehicle WHERE carrier_id = cr.id AND active = true ORDER BY id LIMIT 1),
+                  (SELECT id FROM driver  WHERE carrier_id = cr.id AND active = true AND license_valid_until >= CURRENT_DATE ORDER BY id LIMIT 1),
+                  'ASSIGNED',
+                  'Электроника (ящики)', 800, 120000,
+                  'СПб, ул. Вторая, 5', 'Нижний Новгород, пл. Свободы, 2',
+                  now() + interval '3 hours', now() + interval '1 day 6 hours'
+              FROM (SELECT id FROM carrier ORDER BY id LIMIT 1) cr
+              WHERE EXISTS (SELECT 1 FROM client OFFSET 1);
+
+              -- #3: IN_TRANSIT, carrier #1
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id OFFSET 2 LIMIT 1),
+                  cr.id,
+                  (SELECT id FROM vehicle WHERE carrier_id = cr.id AND active = true ORDER BY id LIMIT 1),
+                  (SELECT id FROM driver  WHERE carrier_id = cr.id AND active = true AND license_valid_until >= CURRENT_DATE ORDER BY id LIMIT 1),
+                  'IN_TRANSIT',
+                  'Металлопрокат', 1200, 180000,
+                  'Екатеринбург, пр. Ленина, 50', 'Пермь, ул. Мира, 7',
+                  now() - interval '2 hours', now() + interval '12 hours'
+              FROM (SELECT id FROM carrier ORDER BY id LIMIT 1) cr
+              WHERE EXISTS (SELECT 1 FROM client OFFSET 2);
+
+              -- #4: DELIVERED, carrier #2 (если есть)
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id OFFSET 3 LIMIT 1),
+                  cr.id,
+                  (SELECT id FROM vehicle WHERE carrier_id = cr.id AND active = true ORDER BY id LIMIT 1),
+                  (SELECT id FROM driver  WHERE carrier_id = cr.id AND active = true AND license_valid_until >= CURRENT_DATE ORDER BY id LIMIT 1),
+                  'DELIVERED',
+                  'Одежда', 600, 90000,
+                  'Казань, ул. Баумана, 3', 'Самара, Московское ш., 17',
+                  now() - interval '2 days', now() - interval '1 day'
+              FROM (SELECT id FROM carrier ORDER BY id OFFSET 1 LIMIT 1) cr
+              WHERE EXISTS (SELECT 1 FROM carrier OFFSET 1) AND EXISTS (SELECT 1 FROM client OFFSET 3);
+
+              -- #5: CANCELLED, carrier #2 (если есть), без назначения
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id OFFSET 4 LIMIT 1),
+                  (SELECT id FROM carrier ORDER BY id OFFSET 1 LIMIT 1),
+                  NULL, NULL,
+                  'CANCELLED',
+                  'Стройматериалы (мешки)', 700, 80000,
+                  'Ростов-на-Дону, ул. Большая Садовая, 100', 'Воронеж, пр. Революции, 15',
+                  now() + interval '1 day', now() + interval '2 days'
+              WHERE EXISTS (SELECT 1 FROM carrier OFFSET 1) AND EXISTS (SELECT 1 FROM client OFFSET 4);
+
+              -- #6: ASSIGNED, carrier #3 (если есть)
+              INSERT INTO shipment (
+                  client_id, carrier_id, vehicle_id, driver_id, status,
+                  cargo_description, cargo_weight, price,
+                  pickup_address, delivery_address,
+                  planned_pickup_at, planned_delivery_at
+              )
+              SELECT
+                  (SELECT id FROM client  ORDER BY id LIMIT 1),
+                  cr.id,
+                  (SELECT id FROM vehicle WHERE carrier_id = cr.id AND active = true ORDER BY id LIMIT 1),
+                  (SELECT id FROM driver  WHERE carrier_id = cr.id AND active = true AND license_valid_until >= CURRENT_DATE ORDER BY id LIMIT 1),
+                  'ASSIGNED',
+                  'Продукты питания (короба)', 900, 110000,
+                  'Новосибирск, ул. Красный пр., 1', 'Омск, ул. Ленина, 20',
+                  now() + interval '8 hours', now() + interval '1 day 8 hours'
+              FROM (SELECT id FROM carrier ORDER BY id OFFSET 2 LIMIT 1) cr
+              WHERE EXISTS (SELECT 1 FROM carrier OFFSET 2) AND EXISTS (SELECT 1 FROM client);

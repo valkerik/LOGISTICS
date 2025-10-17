@@ -3,13 +3,12 @@ package com.example.logistics.service;
 import com.example.logistics.exception.NotFoundException;
 import com.example.logistics.model.Carrier;
 import com.example.logistics.model.Vehicle;
-import com.example.logistics.model.VehicleType;
 import com.example.logistics.repo.CarrierRepository;
 import com.example.logistics.repo.VehicleRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class VehicleService {
@@ -21,11 +20,8 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Vehicle> list(Long carrierId, VehicleType type, Boolean active, Pageable pageable) {
-        if (carrierId != null) return new org.springframework.data.domain.PageImpl<>(repo.findByCarrier_Id(carrierId));
-        if (type != null)     return new org.springframework.data.domain.PageImpl<>(repo.findByType(type));
-        if (Boolean.TRUE.equals(active)) return new org.springframework.data.domain.PageImpl<>(repo.findByActiveTrue());
-        return repo.findAll(pageable);
+    public List<Vehicle> list() {
+        return repo.findAll();
     }
 
     @Transactional(readOnly = true)

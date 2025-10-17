@@ -3,9 +3,6 @@ package com.example.logistics.service;
 import com.example.logistics.exception.NotFoundException;
 import com.example.logistics.model.Carrier;
 import com.example.logistics.repo.CarrierRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +15,8 @@ public class CarrierService {
     public CarrierService(CarrierRepository repo) { this.repo = repo; }
 
     @Transactional(readOnly = true)
-    public Page<Carrier> list(String q, Pageable pageable) {
-        if (q == null || q.isBlank()) {
-            return repo.findAll(pageable);
-        }
-        List<Carrier> carriers = repo.findByNameContainingIgnoreCase(q);
-        return new PageImpl<>(carriers, pageable, carriers.size());
+    public List<Carrier> list() {
+        return repo.findAll();
     }
 
 

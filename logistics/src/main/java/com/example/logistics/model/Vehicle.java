@@ -1,5 +1,6 @@
 package com.example.logistics.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -14,6 +15,7 @@ import java.time.OffsetDateTime;
 @Setter
 @EqualsAndHashCode
 @ToString
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "vehicle", indexes = {
         @Index(name = "idx_vehicle_plate", columnList = "plate_no", unique = true),
         @Index(name = "idx_vehicle_vin", columnList = "vin")
@@ -48,5 +50,4 @@ public class Vehicle {
     @Column(name = "created_at", insertable = false, updatable = false)
     private OffsetDateTime createdAt;
 
-    // getters/setters etc.
 }

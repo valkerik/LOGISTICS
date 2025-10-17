@@ -1,4 +1,4 @@
-package com.example.logistics.web;
+package com.example.logistics.web.controller;
 
 import com.example.logistics.model.Shipment;
 import com.example.logistics.model.ShipmentStatus;
@@ -7,8 +7,6 @@ import com.example.logistics.web.dto.ShipmentAssignRequestDto;
 import com.example.logistics.web.dto.ShipmentChangeStatusRequestDto;
 import com.example.logistics.web.dto.ShipmentCreateRequestDto;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,18 +15,24 @@ import java.util.List;
 @RequestMapping("/api/shipments")
 public class ShipmentController {
     private final ShipmentService service;
-    public ShipmentController(ShipmentService service) { this.service = service; }
 
+    public ShipmentController(ShipmentService service) {
+        this.service = service;
+    }
     @GetMapping
-    public Page<Shipment> list(@RequestParam(required = false) Long clientId,
-                               @RequestParam(required = false) Long carrierId,
-                               @RequestParam(required = false) List<ShipmentStatus> statuses,
-                               Pageable pageable) {
-        return service.list(clientId, carrierId, statuses, pageable);
+    public List<Shipment> list(
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) Long carrierId,
+            @RequestParam(required = false, name = "statuses") List<ShipmentStatus> statuses
+    ) {
+        return service.list(clientId, carrierId, statuses);
     }
 
+
     @GetMapping("/{id}")
-    public Shipment get(@PathVariable Long id) { return service.get(id); }
+    public Shipment get(@PathVariable Long id) {
+        return service.get(id);
+    }
 
     @PostMapping
     public Shipment create(@RequestBody @Valid ShipmentCreateRequestDto req) {
@@ -52,5 +56,7 @@ public class ShipmentController {
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) { service.delete(id); }
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
+    }
 }

@@ -6,9 +6,9 @@ import com.example.logistics.web.dto.CarrierCreateRequestDto;
 
 import com.example.logistics.web.dto.CarrierUpdateRequestDto;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/carriers")
@@ -17,8 +17,8 @@ public class CarrierController {
     public CarrierController(CarrierService service) { this.service = service; }
 
     @GetMapping
-    public Page<Carrier> list(@RequestParam(required = false) String q, Pageable pageable) {
-        return service.list(q, pageable);
+    public List<Carrier> list() {
+        return service.list();
     }
 
     @GetMapping("/{id}")

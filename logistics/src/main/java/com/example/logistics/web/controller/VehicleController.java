@@ -6,9 +6,9 @@ import com.example.logistics.service.VehicleService;
 import com.example.logistics.web.dto.VehicleCreateRequestDto;
 import com.example.logistics.web.dto.VehicleSetActiveRequestDto;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/vehicles")
@@ -17,11 +17,8 @@ public class VehicleController {
     public VehicleController(VehicleService service) { this.service = service; }
 
     @GetMapping
-    public Page<Vehicle> list(@RequestParam(required = false) Long carrierId,
-                              @RequestParam(required = false) VehicleType type,
-                              @RequestParam(required = false) Boolean active,
-                              Pageable pageable) {
-        return service.list(carrierId, type, active, pageable);
+    public List<Vehicle> list() {
+        return service.list();
     }
 
     @GetMapping("/{id}")
