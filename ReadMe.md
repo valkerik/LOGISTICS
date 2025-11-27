@@ -1,3 +1,4 @@
+# ** Курсовая работа **
 # Транспортная компания - учебный проект (DB(PostgreSQL) + Back (RestAPI) + Front(JS + React))
 
 **Стек**: Java 17, Spring Boot 3.5, Liquibase, Spring Security, Lombok, Docker Compose, NodeJS-22.20.0.
